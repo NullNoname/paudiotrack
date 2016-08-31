@@ -1,0 +1,14 @@
+# Maven
+target/
+
+# Eclipse
+.classpath
+.project
+.settings/
+
+# Java class files
+*.class
+
+# generated files
+bin/
+gen/
