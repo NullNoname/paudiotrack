@@ -38,6 +38,13 @@
 		</profile>
 	</profiles>
 
+	<repositories>
+		<repository>
+		    <id>jitpack.io</id>
+		    <url>https://jitpack.io</url>
+		</repository>
+	</repositories>
+
 	<dependencies>
 		<!-- Android 4.1, pulled from Maven Central -->
 		<dependency>
@@ -48,8 +55,7 @@
 		</dependency>
 
 		<!--
-			PaulsCode 3D Sound System
-			It would be pulled from JitPack eventually, but for now you need to 'mvn install' from:
+			PaulsCode 3D Sound System, unofficial Android-friendly branch
 			https://github.com/NullNoname/Paulscode-SoundSystem/tree/droid
 		-->
 		<dependency>
