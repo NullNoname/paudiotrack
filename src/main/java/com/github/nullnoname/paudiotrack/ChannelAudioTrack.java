@@ -52,6 +52,26 @@ import paulscode.sound.SoundSystemConfig;
  */
 public class ChannelAudioTrack extends Channel {
 	/**
+	 * Default stream buffer size (0 to set automatically)
+	 */
+	private static int defaultStreamBufferSize = 0;
+
+	/**
+	 * Default multiplier for stream buffer size (used when defaultStreamBufferSize == 0)
+	 */
+	private static int defaultStreamBufferSizeMultiplier = 4;
+
+	/**
+	 * Stream buffer size (0 to set automatically)
+	 */
+	private int streamBufferSize;
+
+	/**
+	 * Multiplier for stream buffer size (used when streamBufferSize == 0)
+	 */
+	private int streamBufferSizeMultiplier;
+
+	/**
 	 * The Android AudioTrack instance which is used for both normal and stream modes.
 	 */
 	private AudioTrack audioTrack;
@@ -94,11 +114,73 @@ public class ChannelAudioTrack extends Channel {
 	 */
 	private boolean toLoop = false;
 
+	/**
+	 * @return Default stream buffer size (0 to set automatically)
+	 */
+	public static int getDefaultStreamBufferSize() {
+		return defaultStreamBufferSize;
+	}
+
+	/**
+	 * Set the deault stream buffer size
+	 * @param defaultStreamBufferSize Default stream buffer size (0 to set automatically)
+	 */
+	public static void setDefaultStreamBufferSize(int defaultStreamBufferSize) {
+		ChannelAudioTrack.defaultStreamBufferSize = defaultStreamBufferSize;
+	}
+
+	/**
+	 * @return Default multiplier for stream buffer size (used when defaultStreamBufferSize == 0)
+	 */
+	public static int getDefaultStreamBufferSizeMultiplier() {
+		return defaultStreamBufferSizeMultiplier;
+	}
+
+	/**
+	 * Set the default multiplier for stream buffer size (used when defaultStreamBufferSize == 0)
+	 * @param defaultStreamBufferSizeMultiplier Default multiplier for stream buffer size
+	 */
+	public static void setDefaultStreamBufferSizeMultiplier(int defaultStreamBufferSizeMultiplier) {
+		ChannelAudioTrack.defaultStreamBufferSizeMultiplier = defaultStreamBufferSizeMultiplier;
+	}
+
+	/**
+	 * @return Stream buffer size (0 to set automatically)
+	 */
+	public int getStreamBufferSize() {
+		return streamBufferSize;
+	}
+
+	/**
+	 * Set the stream buffer size
+	 * @param streamBufferSize Stream buffer size (0 to set automatically)
+	 */
+	public void setStreamBufferSize(int streamBufferSize) {
+		this.streamBufferSize = streamBufferSize;
+	}
+
+	/**
+	 * @return Multiplier for stream buffer size (used when streamBufferSize == 0)
+	 */
+	public int getStreamBufferSizeMultiplier() {
+		return streamBufferSizeMultiplier;
+	}
+
+	/**
+	 * Set the multiplier for stream buffer size (used when streamBufferSize == 0)
+	 * @param streamBufferSizeMultiplier Multiplier for stream buffer size
+	 */
+	public void setStreamBufferSizeMultiplier(int streamBufferSizeMultiplier) {
+		this.streamBufferSizeMultiplier = streamBufferSizeMultiplier;
+	}
+
 	public ChannelAudioTrack(int type) {
 		super(type);
 		libraryType = LibraryAudioTrack.class;
 
 		streamBuffers = new LinkedList<SoundBuffer>();
+		streamBufferSize = defaultStreamBufferSize;
+		streamBufferSizeMultiplier = defaultStreamBufferSizeMultiplier;
 	}
 
 	/**
@@ -216,8 +298,11 @@ public class ChannelAudioTrack extends Channel {
 			//message("format.getChannels():" + format.getChannels());
 			//message("format.getSampleSizeInBits():" + format.getSampleSizeInBits());
 
-			//TODO: We need a way to set this buffer size manually
-			int bufSize = AudioTrack.getMinBufferSize((int)format.getSampleRate(), getChannelOutputType(format), getAudioEncoding(format)) * 8;
+			// Get the minimum buffer size
+			int minBufferSize = AudioTrack.getMinBufferSize((int)format.getSampleRate(), getChannelOutputType(format), getAudioEncoding(format));
+
+			// If streamBufferSize == 0, use minBufferSize. Otherwise use streamBufferSize as is.
+			int bufSize = (streamBufferSize == 0) ? (minBufferSize*streamBufferSizeMultiplier) : streamBufferSize;
 			message("Using stream mode with " + bufSize + " buffer size");
 
 			newAudioTrack = new AudioTrack(
@@ -634,7 +719,20 @@ public class ChannelAudioTrack extends Channel {
 	 */
 	@Override
 	public boolean playing() {
-		if(audioTrack == null) return false;
-		return (audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING);
+		// Make sure an AudioTrack exists
+		if(audioTrack == null)
+			return false;
+
+		// Make sure it is in playing state
+		if(audioTrack.getPlayState() != AudioTrack.PLAYSTATE_PLAYING)
+			return false;
+
+		// In stream mode, check if we have something to play
+		if(channelType == SoundSystemConfig.TYPE_STREAMING) {
+			if(streamBuffers == null || streamBuffers.isEmpty())
+				return false;
+		}
+
+		return true;
 	}
 }

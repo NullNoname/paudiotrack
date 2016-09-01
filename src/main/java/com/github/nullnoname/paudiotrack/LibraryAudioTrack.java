@@ -61,6 +61,7 @@ public class LibraryAudioTrack extends Library {
 
 	public LibraryAudioTrack() throws SoundSystemException {
 		super();
+		reverseByteOrder = reversByteOrder();
 	}
 
 	/**
@@ -141,10 +142,11 @@ public class LibraryAudioTrack extends Library {
                                      "' in method 'loadSound'" ) )
             return false;
 
+        codec.reverseByteOrder(reverseByteOrder());
         codec.initialize( url );
         message("Now Loading:" + url.toString());
         SoundBuffer buffer = codec.readAll();
-        message("Loaded:" + url.toString());
+        message(filenameURL.getFilename() + " loaded");
         codec.cleanup();
         codec = null;
         if( buffer != null )
@@ -383,12 +385,12 @@ public class LibraryAudioTrack extends Library {
 	}
 
 	/**
-	 * If byte reverse is needed (I don't know if needed on Android) this method should return true.
+	 * If byte reverse is needed (It seems so on Android) this method should return true.
 	 * BUT! this isn't used by SoundSystemConfig! The static 'reversByteOrder' (sic) is used instead.
 	 */
 	@Override
 	public boolean reverseByteOrder() {
-		return false;
+		return reversByteOrder();
 	}
 
 	/**
@@ -397,7 +399,7 @@ public class LibraryAudioTrack extends Library {
 	 * @return True if audio data should be reverse-ordered.
 	 */
 	public static boolean reversByteOrder() {
-		return false;
+		return true;
 	}
 
 	/**

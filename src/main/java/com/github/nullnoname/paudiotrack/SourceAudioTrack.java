@@ -83,6 +83,7 @@ public class SourceAudioTrack extends Source {
 	 */
 	public SourceAudioTrack(ListenerData listener, boolean priority, boolean toStream, boolean toLoop, String sourcename, FilenameURL filenameURL, SoundBuffer soundBuffer, float x, float y, float z, int attModel, float distOrRoll, boolean temporary) {
 		super(priority, toStream, toLoop, sourcename, filenameURL, soundBuffer, x, y, z, attModel, distOrRoll, temporary);
+		if(codec != null) codec.reverseByteOrder(LibraryAudioTrack.reversByteOrder());
 		libraryType = LibraryAudioTrack.class;
 
 		// point handle to the listener information:
@@ -98,6 +99,7 @@ public class SourceAudioTrack extends Source {
 	 */
 	public SourceAudioTrack(ListenerData listener, Source old, SoundBuffer soundBuffer) {
 		super(old, soundBuffer);
+		if(codec != null) codec.reverseByteOrder(LibraryAudioTrack.reversByteOrder());
 		libraryType = LibraryAudioTrack.class;
 
 		// point handle to the listener information:
@@ -120,6 +122,7 @@ public class SourceAudioTrack extends Source {
 	 */
 	public SourceAudioTrack(ListenerData listener, PAudioFormat audioFormat, boolean priority, String sourcename, float x, float y, float z, int attModel, float distOrRoll) {
 		super(audioFormat, priority, sourcename, x, y, z, attModel, distOrRoll);
+		if(codec != null) codec.reverseByteOrder(LibraryAudioTrack.reversByteOrder());
 		libraryType = LibraryAudioTrack.class;
 
 		// point handle to the listener information:
