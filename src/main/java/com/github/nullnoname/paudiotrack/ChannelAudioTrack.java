@@ -252,9 +252,9 @@ public class ChannelAudioTrack extends Channel {
 
 		// if there was already a clip playing on this channel, remove it now:
 		if(audioTrack != null) {
-			audioTrack.stop();
-			audioTrack.flush();
-			audioTrack.release();
+			audioStop();
+			audioFlush();
+			audioRelease();
 		}
 
 		// Update the clip and format varriables:
@@ -322,9 +322,9 @@ public class ChannelAudioTrack extends Channel {
 
 		// if there was already something playing on this channel, remove it:
 		if(audioTrack != null) {
-			audioTrack.stop();
-			audioTrack.flush();
-			audioTrack.release();
+			audioStop();
+			audioFlush();
+			audioRelease();
 		}
 
 		// Update the clip and format varriables:
@@ -584,8 +584,8 @@ public class ChannelAudioTrack extends Channel {
 		if(errorCheck(audioTrack == null, "AudioTrack null in method 'flush'."))
 			return;
 
-		audioTrack.stop();
-		audioTrack.flush();
+		audioStop();
+		audioFlush();
 		//sourceDataLine.drain();
 
 		streamBuffers.clear();
@@ -600,15 +600,15 @@ public class ChannelAudioTrack extends Channel {
 		switch(channelType) {
 			case SoundSystemConfig.TYPE_NORMAL:
 				if(audioTrack != null) {
-					audioTrack.stop();
-					audioTrack.flush();
-					audioTrack.release();
+					audioStop();
+					audioFlush();
+					audioRelease();
 				}
 				break;
 			case SoundSystemConfig.TYPE_STREAMING:
 				if(audioTrack != null) {
 					flush();
-					audioTrack.release();
+					audioRelease();
 				}
 				break;
 			default:
@@ -625,7 +625,7 @@ public class ChannelAudioTrack extends Channel {
 		switch(channelType) {
 			case SoundSystemConfig.TYPE_NORMAL:
 				if(audioTrack != null) {
-					audioTrack.stop();
+					audioStop();
 					if(toLoop && soundBuffer != null && soundBuffer.audioFormat != null && soundBuffer.audioData != null) {
 						int bytesPerFrame = soundBuffer.audioFormat.getSampleSizeInBits() / 8;
 						audioTrack.setLoopPoints(0, soundBuffer.audioData.length / bytesPerFrame, -1);
@@ -664,7 +664,7 @@ public class ChannelAudioTrack extends Channel {
 	@Override
 	public void stop() {
 		if(audioTrack != null) {
-			audioTrack.stop();
+			audioStop();
 			if(channelType == SoundSystemConfig.TYPE_NORMAL) audioTrack.reloadStaticData();
 		}
 	}
@@ -679,7 +679,7 @@ public class ChannelAudioTrack extends Channel {
 			case SoundSystemConfig.TYPE_NORMAL:
 				if(audioTrack != null) {
 					boolean rePlay = playing();
-					audioTrack.stop();
+					audioStop();
 					audioTrack.reloadStaticData();
 					if(rePlay) {
 						if(toLoop && soundBuffer != null && soundBuffer.audioFormat != null && soundBuffer.audioData != null) {
@@ -734,5 +734,49 @@ public class ChannelAudioTrack extends Channel {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Stop the current channel. Report warnings when something goes horribly wrong.
+	 */
+	private void audioStop() {
+		if(audioTrack != null) {
+			try {
+				audioTrack.stop();
+			} catch (IllegalStateException e) {
+				// Stopping an already stopped channel causes this
+			} catch (Exception e) {
+				importantMessage("Problem during audioTrack.stop()");
+				printStackTrace(e);
+			}
+		}
+	}
+
+	/**
+	 * Flush the current channel. Report warnings when something goes wrong.
+	 */
+	private void audioFlush() {
+		if(audioTrack != null) {
+			try {
+				audioTrack.flush();
+			} catch (Exception e) {
+				importantMessage("Problem during audioTrack.flush()");
+				printStackTrace(e);
+			}
+		}
+	}
+
+	/**
+	 * Release the current channel. Report warnings when something goes wrong.
+	 */
+	private void audioRelease() {
+		if(audioTrack != null) {
+			try {
+				audioTrack.release();
+			} catch (Exception e) {
+				importantMessage("Problem during audioTrack.release()");
+				printStackTrace(e);
+			}
+		}
 	}
 }
