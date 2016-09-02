@@ -62,16 +62,6 @@ public class ChannelAudioTrack extends Channel {
 	private static int defaultStreamBufferSizeMultiplier = 4;
 
 	/**
-	 * Stream buffer size (0 to set automatically)
-	 */
-	private int streamBufferSize;
-
-	/**
-	 * Multiplier for stream buffer size (used when streamBufferSize == 0)
-	 */
-	private int streamBufferSizeMultiplier;
-
-	/**
 	 * The Android AudioTrack instance which is used for both normal and stream modes.
 	 */
 	private AudioTrack audioTrack;
@@ -144,43 +134,11 @@ public class ChannelAudioTrack extends Channel {
 		ChannelAudioTrack.defaultStreamBufferSizeMultiplier = defaultStreamBufferSizeMultiplier;
 	}
 
-	/**
-	 * @return Stream buffer size (0 to set automatically)
-	 */
-	public int getStreamBufferSize() {
-		return streamBufferSize;
-	}
-
-	/**
-	 * Set the stream buffer size
-	 * @param streamBufferSize Stream buffer size (0 to set automatically)
-	 */
-	public void setStreamBufferSize(int streamBufferSize) {
-		this.streamBufferSize = streamBufferSize;
-	}
-
-	/**
-	 * @return Multiplier for stream buffer size (used when streamBufferSize == 0)
-	 */
-	public int getStreamBufferSizeMultiplier() {
-		return streamBufferSizeMultiplier;
-	}
-
-	/**
-	 * Set the multiplier for stream buffer size (used when streamBufferSize == 0)
-	 * @param streamBufferSizeMultiplier Multiplier for stream buffer size
-	 */
-	public void setStreamBufferSizeMultiplier(int streamBufferSizeMultiplier) {
-		this.streamBufferSizeMultiplier = streamBufferSizeMultiplier;
-	}
-
 	public ChannelAudioTrack(int type) {
 		super(type);
 		libraryType = LibraryAudioTrack.class;
 
 		streamBuffers = new LinkedList<SoundBuffer>();
-		streamBufferSize = defaultStreamBufferSize;
-		streamBufferSizeMultiplier = defaultStreamBufferSizeMultiplier;
 	}
 
 	/**
@@ -302,7 +260,7 @@ public class ChannelAudioTrack extends Channel {
 			int minBufferSize = AudioTrack.getMinBufferSize((int)format.getSampleRate(), getChannelOutputType(format), getAudioEncoding(format));
 
 			// If streamBufferSize == 0, use minBufferSize. Otherwise use streamBufferSize as is.
-			int bufSize = (streamBufferSize == 0) ? (minBufferSize*streamBufferSizeMultiplier) : streamBufferSize;
+			int bufSize = (getDefaultStreamBufferSize() == 0) ? (minBufferSize*getDefaultStreamBufferSizeMultiplier()) : getDefaultStreamBufferSize();
 			message("Using stream mode with " + bufSize + " buffer size");
 
 			newAudioTrack = new AudioTrack(
