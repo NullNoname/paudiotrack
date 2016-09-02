@@ -436,7 +436,7 @@ public class ChannelAudioTrack extends Channel {
 			return false;
 
 		//sourceDataLine.start();
-		audioTrack.play();	// start now for smooth start
+		audioPlay();	// start now for smooth start
 
 		if(bufferList.isEmpty())
 			return true;
@@ -514,7 +514,7 @@ public class ChannelAudioTrack extends Channel {
 
 		audioTrack.write(nextBuffer.audioData, 0, nextBuffer.audioData.length);
 		if(!playing())
-			audioTrack.play();
+			audioPlay();
 		nextBuffer.cleanup();
 		nextBuffer = null;
 		return true;
@@ -632,14 +632,12 @@ public class ChannelAudioTrack extends Channel {
 					} else {
 						audioTrack.setLoopPoints(0, 0, 0);
 					}
-					audioTrack.play();
-					importantMessage("audioTrack normal play start");
+					audioPlay();
 				}
 				break;
 			case SoundSystemConfig.TYPE_STREAMING:
 				if(audioTrack != null) {
-					audioTrack.play();
-					importantMessage("audioTrack stream play start");
+					audioPlay();
 				}
 				break;
 			default:
@@ -688,7 +686,7 @@ public class ChannelAudioTrack extends Channel {
 						} else {
 							audioTrack.setLoopPoints(0, 0, 0);
 						}
-						audioTrack.play();
+						audioPlay();
 					}
 				}
 				break;
@@ -734,6 +732,22 @@ public class ChannelAudioTrack extends Channel {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Stop the current channel. Report errors when something goes wrong.
+	 */
+	private void audioPlay() {
+		if(audioTrack != null) {
+			try {
+				audioTrack.play();
+			} catch (IllegalStateException e) {
+				// Channel not ready
+			} catch (Exception e) {
+				errorMessage("Problem during audioTrack.play()");
+				printStackTrace(e);
+			}
+		}
 	}
 
 	/**

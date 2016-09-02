@@ -143,7 +143,7 @@ public class LibraryAudioTrack extends Library {
             return false;
 
         codec.reverseByteOrder(reverseByteOrder());
-        codec.initialize( url );
+        codec.initialize( filenameURL );
         message("Now Loading:" + url.toString());
         SoundBuffer buffer = codec.readAll();
         message(filenameURL.getFilename() + " loaded");
