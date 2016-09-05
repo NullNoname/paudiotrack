@@ -32,6 +32,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import paulscode.sound.DefaultFileInputProvider;
@@ -139,22 +140,13 @@ public class AssetFileInputProvider extends DefaultFileInputProvider {
 	@Override
 	public int getContentLength(FilenameURL filenameURL) {
 		if(isAssetURL(filenameURL.getURL())) {
-			InputStream in = null;
-
 			try {
-				in = am.open(getAssetFilename(filenameURL.getURL()));
-
-				int size = 0;
-				while(in.read() != -1) {size++;}
-
-				return size;
+				String fileName = getAssetFilename(filenameURL.getURL());
+				AssetFileDescriptor afd = am.openFd(fileName);
+				return (int)afd.getLength();
 			} catch (Exception e) {
-				// fail
-			} finally {
-				try { in.close(); } catch (Exception e2) {}
+				return -1;
 			}
-
-			return -1;
 		}
 		return super.getContentLength(filenameURL);
 	}
