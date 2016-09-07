@@ -26,6 +26,7 @@
  */
 package com.github.nullnoname.paudiotrack;
 
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -35,7 +36,9 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
+import android.os.ParcelFileDescriptor;
 import paulscode.sound.DefaultFileInputProvider;
+import paulscode.sound.FileDescriptorWrapper;
 import paulscode.sound.FilenameURL;
 
 /**
@@ -143,11 +146,45 @@ public class AssetFileInputProvider extends DefaultFileInputProvider {
 			try {
 				String fileName = getAssetFilename(filenameURL.getURL());
 				AssetFileDescriptor afd = am.openFd(fileName);
-				return (int)afd.getLength();
+				int length = (int)afd.getLength();
+				afd.close();
+				return length;
 			} catch (Exception e) {
 				return -1;
 			}
 		}
 		return super.getContentLength(filenameURL);
+	}
+
+	@Override
+	public long getContentStartOffset(FilenameURL filenameURL) {
+		if(isAssetURL(filenameURL.getURL())) {
+			try {
+				// The FileDescriptor returned from AssetFileDescriptor is actually a huge chunk
+				// This is why we need a start offset
+				String fileName = getAssetFilename(filenameURL.getURL());
+				AssetFileDescriptor afd = am.openFd(fileName);
+				long startOffset = afd.getStartOffset();
+				afd.close();
+				return startOffset;
+			} catch (Exception e) {
+				return 0;
+			}
+		}
+
+		return super.getContentStartOffset(filenameURL);
+	}
+
+	@Override
+	public FileDescriptorWrapper openFileDescriptorWrapper(FilenameURL filenameURL) throws IOException {
+		if(isAssetURL(filenameURL.getURL())) {
+			String fileName = getAssetFilename(filenameURL.getURL());
+			AssetFileDescriptor afd = am.openFd(fileName);
+			ParcelFileDescriptor pfd = afd.getParcelFileDescriptor();
+			FileDescriptor fd = pfd.getFileDescriptor();
+			return new FileDescriptorWrapper(pfd, fd);
+		}
+
+		return super.openFileDescriptorWrapper(filenameURL);
 	}
 }
