@@ -105,6 +105,16 @@ public class ChannelAudioTrack extends Channel {
 	private boolean toLoop = false;
 
 	/**
+	 * Current Gain
+	 */
+	private float currentGain = 1.0f;
+
+	/**
+	 * Current Pan
+	 */
+	private float currentPan = 0.0f;
+
+	/**
 	 * @return Default stream buffer size (0 to set automatically)
 	 */
 	public static int getDefaultStreamBufferSize() {
@@ -303,6 +313,9 @@ public class ChannelAudioTrack extends Channel {
 		if(audioTrack == null) return;
 		//initialGain = 1f;
 		initialSampleRate = audioTrack.getPlaybackRate();
+		currentGain = 1.0f;
+		currentPan = 0.0f;
+		setAudioGainAndPan();
 	}
 
 	/**
@@ -330,8 +343,8 @@ public class ChannelAudioTrack extends Channel {
 		if(pan > 1.0f)
 			pan = 1.0f;
 		// Update the pan:
-		//TODO: How do I do it in AudioTrack?
-		//panControl.setValue(pan);
+		currentPan = pan;
+		setAudioGainAndPan();
 	}
 
 	/**
@@ -352,7 +365,29 @@ public class ChannelAudioTrack extends Channel {
 			gain = 1.0f;
 
 		// Update the gain:
-		audioTrack.setStereoVolume(gain, gain);
+		currentGain = gain;
+		setAudioGainAndPan();
+	}
+
+	/**
+	 * Set the current gain and pan to the AudioTrack
+	 */
+	private void setAudioGainAndPan() {
+		// https://android.googlesource.com/platform/frameworks/base/+/refs/heads/master/core/java/android/speech/tts/BlockingAudioTrack.java#318
+		if(audioTrack == null)
+			return;
+
+		float volLeft = currentGain;
+		float volRight = currentGain;
+		if (currentPan > 0.0f) {
+			volLeft *= (1.0f - currentPan);
+		} else if (currentPan < 0.0f) {
+			volRight *= (1.0f + currentPan);
+		}
+
+		if(audioTrack.setStereoVolume(volLeft, volRight) != AudioTrack.SUCCESS) {
+			errorMessage("Failed to set volume to " + volLeft + "," + volRight);
+		}
 	}
 
 	/**
@@ -375,7 +410,9 @@ public class ChannelAudioTrack extends Channel {
 		sampleRate = sampleRate * initialSampleRate;
 
 		// Update the pitch:
-		audioTrack.setPlaybackRate((int)sampleRate);
+		if(audioTrack.setPlaybackRate((int)sampleRate) != AudioTrack.SUCCESS) {
+			errorMessage("Failed to set pitch to " + sampleRate);
+		}
 	}
 
 	/**
@@ -584,11 +621,15 @@ public class ChannelAudioTrack extends Channel {
 			case SoundSystemConfig.TYPE_NORMAL:
 				if(audioTrack != null) {
 					audioStop();
+					int errorCode;
 					if(toLoop && soundBuffer != null && soundBuffer.audioFormat != null && soundBuffer.audioData != null) {
 						int bytesPerFrame = soundBuffer.audioFormat.getSampleSizeInBits() / 8;
-						audioTrack.setLoopPoints(0, soundBuffer.audioData.length / bytesPerFrame, -1);
+						errorCode = audioTrack.setLoopPoints(0, soundBuffer.audioData.length / bytesPerFrame, -1);
 					} else {
-						audioTrack.setLoopPoints(0, 0, 0);
+						errorCode = audioTrack.setLoopPoints(0, 0, 0);
+					}
+					if(errorCode != AudioTrack.SUCCESS) {
+						errorMessage("Problem setting loop points (errorCode:" + errorCode + ")");
 					}
 					audioPlay();
 				}
@@ -638,11 +679,15 @@ public class ChannelAudioTrack extends Channel {
 					audioStop();
 					audioTrack.reloadStaticData();
 					if(rePlay) {
+						int errorCode;
 						if(toLoop && soundBuffer != null && soundBuffer.audioFormat != null && soundBuffer.audioData != null) {
 							int bytesPerFrame = soundBuffer.audioFormat.getSampleSizeInBits() / 8;
-							audioTrack.setLoopPoints(0, soundBuffer.audioData.length / bytesPerFrame, -1);
+							errorCode = audioTrack.setLoopPoints(0, soundBuffer.audioData.length / bytesPerFrame, -1);
 						} else {
-							audioTrack.setLoopPoints(0, 0, 0);
+							errorCode = audioTrack.setLoopPoints(0, 0, 0);
+						}
+						if(errorCode != AudioTrack.SUCCESS) {
+							errorMessage("Problem setting loop points (errorCode:" + errorCode + ")");
 						}
 						audioPlay();
 					}

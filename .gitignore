@@ -12,3 +12,7 @@ target/
 # generated files
 bin/
 gen/
+
+# IntellJ IDEA
+.idea/
+*.iml
